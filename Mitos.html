@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¿Mito o Ciencia en Psicología?</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f6f6f6;
+            color: #383838;
+        }
+        .container-main {
+            min-height: 100vh;
+        }
+        .bg-institutional-blue-dark {
+            background-color: #004379;
+        }
+        .bg-institutional-blue-medium {
+            background-color: #6e94b3;
+        }
+        .bg-institutional-yellow {
+            background-color: #EDAB00;
+        }
+        .bg-light-gray-box {
+            background-color: #f6f6f6;
+        }
+        .text-institutional-blue-dark {
+            color: #004379;
+        }
+        .text-institutional-blue-medium {
+            color: #6e94b3;
+        }
+        .text-institutional-yellow {
+            color: #EDAB00;
+        }
+        .text-dark-gray {
+            color: #383838;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #004379;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .citation {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 1rem;
+            text-align: left;
+        }
+        .citation a {
+            color: #004379;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-light-gray-box">
+    <div class="container-main flex flex-col items-center justify-center p-4">
+        <div id="quiz-container" class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6 md:p-10 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-institutional-blue-dark mb-4 md:mb-6">
+                ¿Mito o Ciencia en Psicología?
+            </h1>
+            <p id="question-text" class="text-xl md:text-2xl font-semibold mb-8 text-dark-gray">
+                <!-- La pregunta se insertará aquí -->
+            </p>
+            <div id="options-container" class="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-8 mb-8">
+                <button id="mito-btn" class="py-4 px-8 rounded-full text-white font-bold text-lg md:text-xl transform transition-transform duration-200 hover:scale-105 shadow-md bg-institutional-blue-medium">
+                    MITO
+                </button>
+                <button id="ciencia-btn" class="py-4 px-8 rounded-full text-white font-bold text-lg md:text-xl transform transition-transform duration-200 hover:scale-105 shadow-md bg-institutional-blue-medium">
+                    CIENCIA
+                </button>
+            </div>
+            <div id="feedback-container" class="mt-8 p-6 rounded-xl hidden transition-all duration-300">
+                <p id="feedback-result" class="text-2xl font-bold mb-2">
+                    <!-- Resultado de la respuesta -->
+                </p>
+                <p id="feedback-explanation" class="text-lg leading-relaxed">
+                    <!-- Explicación de la respuesta -->
+                </p>
+                <button id="expand-btn" class="mt-4 py-2 px-6 rounded-full text-white font-bold text-sm md:text-base hidden bg-institutional-blue-dark transform transition-transform duration-200 hover:scale-105 shadow-md">
+                    ✨ Expandir explicación
+                </button>
+                <div id="expanded-content" class="mt-4 text-left p-4 bg-light-gray-box rounded-lg hidden">
+                    <div id="expanded-loader" class="flex justify-center items-center py-4 hidden">
+                        <div class="loader"></div>
+                    </div>
+                    <p id="expanded-text" class="text-base"></p>
+                </div>
+            </div>
+            <button id="next-btn" class="mt-8 py-3 px-8 rounded-full text-white font-bold text-lg hidden bg-institutional-yellow transform transition-transform duration-200 hover:scale-105 shadow-md">
+                Siguiente
+            </button>
+            <button id="generate-btn" class="mt-8 py-3 px-8 rounded-full text-white font-bold text-lg hidden bg-institutional-blue-dark transform transition-transform duration-200 hover:scale-105 shadow-md">
+                ✨ Generar nueva pregunta
+            </button>
+            <div id="score-container" class="mt-8 text-xl font-semibold text-dark-gray">
+                Puntuación: <span id="current-score">0</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Datos de las preguntas iniciales
+        let quizData = [
+            { question: "Solo usamos el 10% del cerebro.", isMyth: true, explanation: "El cerebro está activo en su totalidad, incluso en reposo." },
+            { question: "El estrés crónico afecta al sistema inmunológico y la salud física.", isMyth: false, explanation: "Aumenta la vulnerabilidad a enfermedades." },
+            { question: "Las personas aprenden mejor si se les enseña de acuerdo a su estilo de aprendizaje (visual, auditivo, kinestésico).", isMyth: true, explanation: "La evidencia no lo respalda." },
+            { question: "La práctica distribuida es más eficaz que el estudio intensivo de última hora.", isMyth: false, explanation: "Efecto de espaciado en la memoria." },
+            { question: "Los hemisferios cerebrales determinan la personalidad: unos más racionales y otros más creativos.", isMyth: true, explanation: "Ambos hemisferios trabajan juntos." },
+            { question: "Las emociones influyen en la toma de decisiones.", isMyth: false, explanation: "Emociones como miedo o entusiasmo modifican elecciones." },
+            { question: "La hipnosis permite controlar totalmente a una persona.", isMyth: true, explanation: "Aumenta la sugestión pero no rompe la voluntad." },
+            { question: "La plasticidad cerebral permite que el cerebro se adapte toda la vida.", isMyth: false, explanation: "El cerebro puede reorganizarse y generar nuevas conexiones." },
+            { question: "La memoria funciona como una cámara de video que graba todo lo que vivimos.", isMyth: true, explanation: "La memoria es reconstructiva." },
+            { question: "La exposición gradual es eficaz para tratar fobias.", isMyth: false, explanation: "Terapia de exposición con alta evidencia." },
+            { question: "El suicidio no debe hablarse porque se corre riesgo de inducirlo.", isMyth: true, explanation: "Hablar responsablemente previene y abre ayuda." },
+            { question: "El apoyo social protege frente a la depresión y el impacto del estrés.", isMyth: false, explanation: "Evidencia de redes de apoyo como factor protector." },
+            { question: "El TDAH solo afecta a niños.", isMyth: true, explanation: "También se manifiesta en adultos." },
+            { question: "La privación del sueño afecta memoria, atención y regulación emocional.", isMyth: false, explanation: "El sueño es clave para el rendimiento cognitivo." },
+            { question: "Las emociones negativas deben evitarse porque son malas para la salud.", isMyth: true, explanation: "Todas cumplen funciones adaptativas." },
+            { question: "La meditación y el mindfulness reducen niveles de ansiedad y estrés.", isMyth: false, explanation: "Beneficios moderados en regulación emocional." },
+            { question: "Los sueños tienen siempre un significado oculto universal.", isMyth: true, explanation: "Se relacionan más con memoria y emociones." },
+            { question: "El aprendizaje observacional es una vía poderosa de adquisición de conductas.", isMyth: false, explanation: "Bandura y la teoría del modelado lo demuestran." },
+            { question: "Las personas violentas lo son porque tienen demasiada testosterona.", isMyth: true, explanation: "La agresión es multifactorial." },
+            { question: "La inteligencia tiene un componente hereditario, pero también está influida por el ambiente.", isMyth: false, explanation: "Estudios con gemelos y adopción lo confirman." }
+        ];
+        
+        // Variables globales
+        let currentQuestionIndex = 0;
+        let score = 0;
+        
+        // Elementos del DOM
+        const questionText = document.getElementById('question-text');
+        const mitoBtn = document.getElementById('mito-btn');
+        const cienciaBtn = document.getElementById('ciencia-btn');
+        const feedbackContainer = document.getElementById('feedback-container');
+        const feedbackResult = document.getElementById('feedback-result');
+        const feedbackExplanation = document.getElementById('feedback-explanation');
+        const nextBtn = document.getElementById('next-btn');
+        const scoreContainer = document.getElementById('current-score');
+        const expandBtn = document.getElementById('expand-btn');
+        const expandedContent = document.getElementById('expanded-content');
+        const expandedText = document.getElementById('expanded-text');
+        const expandedLoader = document.getElementById('expanded-loader');
+        const generateBtn = document.getElementById('generate-btn');
+
+        // Función para aleatorizar el array de preguntas
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Función para manejar las llamadas a la API de Gemini
+        async function callGeminiAPI(payload) {
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            
+            let retries = 0;
+            const maxRetries = 3;
+            const delay = 1000;
+
+            while (retries < maxRetries) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) {
+                        if (response.status === 429) {
+                            retries++;
+                            await new Promise(res => setTimeout(res, delay * Math.pow(2, retries)));
+                            continue;
+                        } else {
+                            throw new Error(`Error en la API: ${response.statusText}`);
+                        }
+                    }
+
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        return candidate.content.parts[0].text;
+                    } else {
+                        throw new Error('Respuesta de la API malformada.');
+                    }
+                } catch (error) {
+                    console.error('Error al llamar a la API de Gemini:', error);
+                    return null;
+                }
+            }
+            return null; // Fallo después de todos los reintentos
+        }
+
+        async function expandExplanation(concept) {
+            expandedContent.classList.remove('hidden');
+            expandedLoader.classList.remove('hidden');
+            expandedText.textContent = '';
+            
+            const systemPrompt = "Actúa como un profesor de psicología universitaria. Proporciona una explicación detallada y fundamentada en evidencia sobre el siguiente concepto o afirmación. La respuesta debe ser informativa, clara y citar fuentes de manera apropiada.";
+            const userQuery = `Explica en detalle el concepto: "${concept}"`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                tools: [{ "google_search": {} }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+
+            const response = await callGeminiAPI(payload);
+            
+            expandedLoader.classList.add('hidden');
+            if (response) {
+                expandedText.innerHTML = response.replace(/\n/g, '<br>');
+            } else {
+                expandedText.textContent = "Lo siento, no pude obtener una explicación detallada. Inténtalo de nuevo más tarde.";
+            }
+        }
+
+        async function generateNewQuestion() {
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<div class="loader"></div>';
+            
+            const userQuery = `Genera una nueva pregunta para un quiz de 'Mito o Ciencia' para estudiantes universitarios de psicología. La respuesta debe estar en formato JSON con las siguientes propiedades: "question", "isMyth" (boolean), y "explanation".`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            "question": { "type": "STRING" },
+                            "isMyth": { "type": "BOOLEAN" },
+                            "explanation": { "type": "STRING" }
+                        },
+                        "propertyOrdering": ["question", "isMyth", "explanation"]
+                    }
+                }
+            };
+            
+            const response = await callGeminiAPI(payload);
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '✨ Generar nueva pregunta';
+
+            if (response) {
+                try {
+                    const newQuestion = JSON.parse(response);
+                    if (newQuestion.question && typeof newQuestion.isMyth === 'boolean' && newQuestion.explanation) {
+                        quizData.push(newQuestion);
+                        currentQuestionIndex++;
+                        loadQuestion();
+                        return;
+                    }
+                } catch (e) {
+                    console.error("Error al parsear la respuesta JSON de la API:", e);
+                }
+            }
+            alert("No se pudo generar una nueva pregunta. Por favor, inténtalo de nuevo.");
+        }
+
+        function loadQuestion() {
+            if (currentQuestionIndex < quizData.length) {
+                const currentQuestion = quizData[currentQuestionIndex];
+                questionText.textContent = currentQuestion.question;
+                
+                // Reinicia el estado de los botones y el feedback
+                mitoBtn.disabled = false;
+                cienciaBtn.disabled = false;
+                mitoBtn.classList.remove('bg-green-500', 'bg-red-500', 'opacity-50', 'bg-institutional-blue-dark');
+                cienciaBtn.classList.remove('bg-green-500', 'bg-red-500', 'opacity-50', 'bg-institutional-blue-dark');
+                mitoBtn.classList.add('bg-institutional-blue-medium');
+                cienciaBtn.classList.add('bg-institutional-blue-medium');
+                feedbackContainer.classList.add('hidden');
+                nextBtn.classList.add('hidden');
+                generateBtn.classList.add('hidden');
+                expandBtn.classList.add('hidden');
+                expandedContent.classList.add('hidden');
+                feedbackContainer.style.backgroundColor = '';
+            } else {
+                showResults();
+            }
+        }
+
+        function checkAnswer(isMythAnswer) {
+            const currentQuestion = quizData[currentQuestionIndex];
+            const isCorrect = currentQuestion.isMyth === isMythAnswer;
+            
+            // Desactiva los botones de opción
+            mitoBtn.disabled = true;
+            cienciaBtn.disabled = true;
+
+            // Muestra el feedback
+            feedbackContainer.classList.remove('hidden');
+
+            if (isCorrect) {
+                score++;
+                scoreContainer.textContent = score;
+                feedbackResult.textContent = '¡Correcto!';
+                feedbackContainer.classList.add('bg-green-200');
+                feedbackContainer.style.backgroundColor = 'rgba(144, 238, 144, 0.5)';
+            } else {
+                feedbackResult.textContent = 'Incorrecto.';
+                feedbackContainer.classList.add('bg-red-200');
+                feedbackContainer.style.backgroundColor = 'rgba(255, 99, 71, 0.5)';
+            }
+
+            feedbackExplanation.textContent = currentQuestion.explanation;
+
+            // Resalta la respuesta correcta
+            const correctBtn = currentQuestion.isMyth ? mitoBtn : cienciaBtn;
+            correctBtn.classList.remove('bg-institutional-blue-medium');
+            correctBtn.classList.add('bg-institutional-blue-dark');
+            
+            // Oscurece la respuesta incorrecta
+            const incorrectBtn = currentQuestion.isMyth ? cienciaBtn : mitoBtn;
+            incorrectBtn.classList.add('opacity-50');
+
+            nextBtn.classList.remove('hidden');
+            expandBtn.classList.remove('hidden');
+        }
+
+        function showResults() {
+            const quizContainer = document.getElementById('quiz-container');
+            quizContainer.innerHTML = `
+                <h1 class="text-3xl md:text-4xl font-bold text-institutional-blue-dark mb-4 md:mb-6">
+                    Quiz completado
+                </h1>
+                <p class="text-xl md:text-2xl font-semibold mb-8 text-dark-gray">
+                    Tu puntuación final es: ${score} de ${quizData.length}
+                </p>
+                <div class="mt-8 flex flex-col items-center space-y-4">
+                    <button id="restart-btn" class="py-3 px-8 rounded-full text-white font-bold text-lg bg-institutional-yellow transform transition-transform duration-200 hover:scale-105 shadow-md">
+                        Jugar de nuevo
+                    </button>
+                    <button id="generate-btn-end" class="py-3 px-8 rounded-full text-white font-bold text-lg bg-institutional-blue-dark transform transition-transform duration-200 hover:scale-105 shadow-md">
+                        ✨ Generar nueva pregunta
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('restart-btn').addEventListener('click', () => {
+                window.location.reload();
+            });
+
+            document.getElementById('generate-btn-end').addEventListener('click', async () => {
+                await generateNewQuestion();
+                document.getElementById('quiz-container').classList.remove('hidden');
+            });
+
+        }
+
+        // Event Listeners
+        mitoBtn.addEventListener('click', () => checkAnswer(true));
+        cienciaBtn.addEventListener('click', () => checkAnswer(false));
+        nextBtn.addEventListener('click', () => {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        });
+        expandBtn.addEventListener('click', () => {
+            const currentQuestion = quizData[currentQuestionIndex];
+            expandExplanation(currentQuestion.question);
+        });
+
+        // Carga la primera pregunta al inicio
+        document.addEventListener('DOMContentLoaded', () => {
+            shuffleArray(quizData);
+            loadQuestion();
+        });
+    </script>
+</body>
+</html>
